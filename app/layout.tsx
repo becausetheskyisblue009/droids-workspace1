@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import ThemeToggle from "./theme-toggle";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         {children}
+        <ThemeToggle />
         {/* SW registration on client */}
         <script dangerouslySetInnerHTML={{__html: `if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {window.addEventListener('load', () => {navigator.serviceWorker.register('/sw.js').catch(()=>{});});}`}} />
       </body>

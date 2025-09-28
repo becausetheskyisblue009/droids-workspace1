@@ -1,0 +1,73 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  deployments: write
+
+concurrency:
+  group: vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      NEXT_TELEMETRY_DISABLED: 1
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install deps
+        run: npm install --no-audit --no-fund
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Type check
+        run: npm run type-check
+
+      - name: Test
+        run: npm run test
+
+      - name: Set Vercel environment (preview or production)
+        id: set-env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "V_ENV=production" >> $GITHUB_ENV
+          else
+            echo "V_ENV=preview" >> $GITHUB_ENV
+          fi
+
+      - name: Pull Vercel env
+        run: npx vercel pull --yes --environment=$V_ENV
+
+      - name: Vercel build
+        run: npx vercel build
+
+      - name: Deploy (preview or production)
+        id: deploy
+        run: |
+          if [ "$V_ENV" = "production" ]; then
+            url=$(npx vercel deploy --prebuilt --prod)
+          else
+            url=$(npx vercel deploy --prebuilt)
+          fi
+          echo "url=$url" >> $GITHUB_OUTPUT
+
+      - name: Post deployment URL
+        run: echo "Deployed to ${{ steps.deploy.outputs.url }}"
