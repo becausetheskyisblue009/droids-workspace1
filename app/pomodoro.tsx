@@ -162,22 +162,25 @@ export default function Pomodoro() {
 
       <div className="grid place-items-center">
         <div className="size-56 sm:size-64 relative">
-          <svg viewBox="0 0 100 100" className="size-full rotate-[-90deg]">
+          <svg
+            viewBox="0 0 100 100"
+            className="size-full rotate-[-90deg] text-[--foreground]"
+          >
             <circle
               cx="50"
               cy="50"
               r="45"
-              className="fill-none opacity-30"
-              stroke="#000"
-              strokeWidth="6"
+              className="fill-none opacity-20"
+              stroke="currentColor"
+              strokeWidth="4"
             />
             <circle
               cx="50"
               cy="50"
               r="45"
               className="fill-none transition-[stroke-dashoffset] duration-1000 ease-linear"
-              stroke="#000"
-              strokeWidth="6"
+              stroke="currentColor"
+              strokeWidth="4"
               strokeDasharray={2 * Math.PI * 45}
               strokeDashoffset={(1 - remainingPct / 100) * (2 * Math.PI * 45)}
               strokeLinecap="round"
