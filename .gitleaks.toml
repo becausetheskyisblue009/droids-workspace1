@@ -1,0 +1,7 @@
+title = "gitleaks config"
+
+[allowlist]
+description = "allow generated lockfiles"
+files = [
+  '''package-lock\.json''',
+]
