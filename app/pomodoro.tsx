@@ -88,9 +88,10 @@ export default function Pomodoro() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [minutes, mode]);
 
-  const percent = useMemo(() => {
+  // Remaining percentage (100 at start -> 0 at end)
+  const remainingPct = useMemo(() => {
     const total = minutes[mode] * 60;
-    return Math.max(0, Math.min(100, 100 - (remaining / total) * 100));
+    return Math.max(0, Math.min(100, (remaining / total) * 100));
   }, [minutes, mode, remaining]);
 
   const tick = useCallback(() => {
@@ -166,17 +167,19 @@ export default function Pomodoro() {
               cx="50"
               cy="50"
               r="45"
-              className="fill-none stroke-[--border] opacity-40"
-              strokeWidth="8"
+              className="fill-none opacity-30"
+              stroke="#000"
+              strokeWidth="6"
             />
             <circle
               cx="50"
               cy="50"
               r="45"
-              className="fill-none stroke-[--foreground] transition-[stroke-dashoffset] duration-1000 ease-linear"
-              strokeWidth="8"
+              className="fill-none transition-[stroke-dashoffset] duration-1000 ease-linear"
+              stroke="#000"
+              strokeWidth="6"
               strokeDasharray={2 * Math.PI * 45}
-              strokeDashoffset={(1 - percent / 100) * (2 * Math.PI * 45)}
+              strokeDashoffset={(1 - remainingPct / 100) * (2 * Math.PI * 45)}
               strokeLinecap="round"
             />
           </svg>
