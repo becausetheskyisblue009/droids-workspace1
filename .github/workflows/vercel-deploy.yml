@@ -30,7 +30,6 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: npm
 
       - name: Install deps
         run: npm install --no-audit --no-fund
@@ -53,19 +52,26 @@ jobs:
             echo "V_ENV=preview" >> $GITHUB_ENV
           fi
 
+      - name: Prepare Vercel project linkage (non-interactive)
+        run: |
+          mkdir -p .vercel
+          cat > .vercel/project.json <<EOF
+          {"orgId":"${VERCEL_ORG_ID}","projectId":"${VERCEL_PROJECT_ID}"}
+          EOF
+
       - name: Pull Vercel env
-        run: npx vercel pull --yes --environment=$V_ENV
+        run: npx vercel pull --yes --environment=$V_ENV --token="$VERCEL_TOKEN"
 
       - name: Vercel build
-        run: npx vercel build
+        run: npx vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy (preview or production)
         id: deploy
         run: |
           if [ "$V_ENV" = "production" ]; then
-            url=$(npx vercel deploy --prebuilt --prod)
+            url=$(npx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
           else
-            url=$(npx vercel deploy --prebuilt)
+            url=$(npx vercel deploy --prebuilt --token="$VERCEL_TOKEN")
           fi
           echo "url=$url" >> $GITHUB_OUTPUT
 
