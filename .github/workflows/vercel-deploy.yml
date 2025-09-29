@@ -52,8 +52,15 @@ jobs:
             echo "V_ENV=preview" >> $GITHUB_ENV
           fi
 
+      - name: Prepare Vercel project linkage (non-interactive)
+        run: |
+          mkdir -p .vercel
+          cat > .vercel/project.json <<EOF
+          {"orgId":"${VERCEL_ORG_ID}","projectId":"${VERCEL_PROJECT_ID}"}
+          EOF
+
       - name: Pull Vercel env
-        run: npx vercel pull --yes --environment=$V_ENV --token="$VERCEL_TOKEN" --project "$VERCEL_PROJECT_ID" --org "$VERCEL_ORG_ID"
+        run: npx vercel pull --yes --environment=$V_ENV --token="$VERCEL_TOKEN"
 
       - name: Vercel build
         run: npx vercel build --token="$VERCEL_TOKEN"
