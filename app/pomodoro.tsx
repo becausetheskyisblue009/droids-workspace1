@@ -81,6 +81,32 @@ export default function Pomodoro() {
   const [remaining, setRemaining] = useState(minutes.focus * 60);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
+  const notifiedRef = useRef(false);
+
+  const requestNotifPermission = useCallback(() => {
+    try {
+      if (typeof window === "undefined" || !("Notification" in window)) return;
+      if (Notification.permission === "default") {
+        // Request on a user action (start button) for better UX
+        Notification.requestPermission().catch(() => {});
+      }
+    } catch {}
+  }, []);
+
+  const notify = useCallback((title: string, body: string) => {
+    try {
+      if (typeof window === "undefined" || !("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          if (reg) reg.showNotification(title, { body, silent: true }).catch(() => {});
+          else new Notification(title, { body, silent: true });
+        });
+      } else {
+        new Notification(title, { body, silent: true });
+      }
+    } catch {}
+  }, []);
 
   // Keep remaining in sync when mode or settings change and timer not running
   useEffect(() => {
@@ -99,6 +125,11 @@ export default function Pomodoro() {
       if (r <= 1) {
         // complete current cycle
         setRunning(false);
+        if (!notifiedRef.current) {
+          const label = mode === "focus" ? "Focus" : mode === "short" ? "Short" : "Long";
+          notify("Time is up", `${label} session complete`);
+          notifiedRef.current = true;
+        }
         if (intervalRef.current) {
           window.clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -108,14 +139,16 @@ export default function Pomodoro() {
       }
       return r - 1;
     });
-  }, []);
+  }, [mode, notify]);
 
   const start = useCallback(() => {
     if (running) return;
+    notifiedRef.current = false;
+    requestNotifPermission();
     setRunning(true);
     if (intervalRef.current) window.clearInterval(intervalRef.current);
     intervalRef.current = window.setInterval(tick, 1000);
-  }, [running, tick]);
+  }, [running, tick, requestNotifPermission]);
 
   const pause = useCallback(() => {
     setRunning(false);
