@@ -172,7 +172,7 @@ export default function Pomodoro() {
               r="45"
               className="fill-none opacity-20"
               stroke="currentColor"
-              strokeWidth="4"
+              strokeWidth="3"
             />
             <circle
               cx="50"
@@ -180,7 +180,7 @@ export default function Pomodoro() {
               r="45"
               className="fill-none transition-[stroke-dashoffset] duration-1000 ease-linear"
               stroke="currentColor"
-              strokeWidth="4"
+              strokeWidth="3"
               strokeDasharray={2 * Math.PI * 45}
               strokeDashoffset={(1 - remainingPct / 100) * (2 * Math.PI * 45)}
               strokeLinecap="round"
