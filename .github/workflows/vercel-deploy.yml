@@ -53,18 +53,18 @@ jobs:
           fi
 
       - name: Pull Vercel env
-        run: npx vercel pull --yes --environment=$V_ENV
+        run: npx vercel pull --yes --environment=$V_ENV --token="$VERCEL_TOKEN" --project "$VERCEL_PROJECT_ID" --org "$VERCEL_ORG_ID"
 
       - name: Vercel build
-        run: npx vercel build
+        run: npx vercel build --token="$VERCEL_TOKEN"
 
       - name: Deploy (preview or production)
         id: deploy
         run: |
           if [ "$V_ENV" = "production" ]; then
-            url=$(npx vercel deploy --prebuilt --prod)
+            url=$(npx vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
           else
-            url=$(npx vercel deploy --prebuilt)
+            url=$(npx vercel deploy --prebuilt --token="$VERCEL_TOKEN")
           fi
           echo "url=$url" >> $GITHUB_OUTPUT
 
