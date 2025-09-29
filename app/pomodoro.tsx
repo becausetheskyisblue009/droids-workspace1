@@ -81,6 +81,34 @@ export default function Pomodoro() {
   const [remaining, setRemaining] = useState(minutes.focus * 60);
   const [running, setRunning] = useState(false);
   const intervalRef = useRef<number | null>(null);
+  const notifiedRef = useRef(false);
+  const [toast, setToast] = useState<string | null>(null);
+  const toastTimerRef = useRef<number | null>(null);
+
+  const requestNotifPermission = useCallback(() => {
+    try {
+      if (typeof window === "undefined" || !("Notification" in window)) return;
+      if (Notification.permission === "default") {
+        // Request on a user action (start button) for better UX
+        Notification.requestPermission().catch(() => {});
+      }
+    } catch {}
+  }, []);
+
+  const notify = useCallback((title: string, body: string) => {
+    try {
+      if (typeof window === "undefined" || !("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistration().then((reg) => {
+          if (reg) reg.showNotification(title, { body, silent: true }).catch(() => {});
+          else new Notification(title, { body, silent: true });
+        });
+      } else {
+        new Notification(title, { body, silent: true });
+      }
+    } catch {}
+  }, []);
 
   // Keep remaining in sync when mode or settings change and timer not running
   useEffect(() => {
@@ -99,6 +127,17 @@ export default function Pomodoro() {
       if (r <= 1) {
         // complete current cycle
         setRunning(false);
+        if (!notifiedRef.current) {
+          const label = mode === "focus" ? "Focus" : mode === "short" ? "Short" : "Long";
+          notify("Time is up", `${label} session complete`);
+          // In-app toast notification (top-right)
+          try {
+            if (toastTimerRef.current) window.clearTimeout(toastTimerRef.current);
+            setToast(`Time is up — ${label} session complete`);
+            toastTimerRef.current = window.setTimeout(() => setToast(null), 4000);
+          } catch {}
+          notifiedRef.current = true;
+        }
         if (intervalRef.current) {
           window.clearInterval(intervalRef.current);
           intervalRef.current = null;
@@ -108,14 +147,16 @@ export default function Pomodoro() {
       }
       return r - 1;
     });
-  }, []);
+  }, [mode, notify]);
 
   const start = useCallback(() => {
     if (running) return;
+    notifiedRef.current = false;
+    requestNotifPermission();
     setRunning(true);
     if (intervalRef.current) window.clearInterval(intervalRef.current);
     intervalRef.current = window.setInterval(tick, 1000);
-  }, [running, tick]);
+  }, [running, tick, requestNotifPermission]);
 
   const pause = useCallback(() => {
     setRunning(false);
@@ -140,6 +181,20 @@ export default function Pomodoro() {
 
   return (
     <div className="max-w-md w-full">
+      {toast && (
+        <div className="fixed top-16 right-3 z-50">
+          <div className="flex items-start gap-2 rounded-xl border border-[--border]/70 bg-background/85 backdrop-blur px-3 py-2 shadow-sm">
+            <div className="text-sm">{toast}</div>
+            <button
+              aria-label="Dismiss notification"
+              className="ml-2 rounded-md px-1 text-sm hover:bg-[--foreground]/10"
+              onClick={() => setToast(null)}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
       <h1 className="text-center text-2xl font-semibold mb-6">Pomodoro</h1>
 
       <div className="flex items-center justify-center gap-2 rounded-2xl border border-[--border]/50 p-1 mb-6">
